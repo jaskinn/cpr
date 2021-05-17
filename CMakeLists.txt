@@ -162,13 +162,20 @@ if(CPR_FORCE_USE_SYSTEM_CURL)
 else()
     message(STATUS "Configuring build in curl...")
 
-    # ZLIB is required by curl:
-    include(cmake/zlib_external.cmake)
+    # ZLIB is optional for curl
+    # to disable it:
+    # * from command line:
+    #     -DCURL_ZLIB=OFF
+    # * from CMake script:
+    #     SET(CURL_ZLIB OFF CACHE STRING "" FORCE)
+    if (CURL_ZLIB OR CURL_ZLIB STREQUAL AUTO OR NOT DEFINED CACHE{CURL_ZLIB})
+        include(cmake/zlib_external.cmake)
+    endif()
 
     # We only need HTTP (and HTTPS) support:
     set(HTTP_ONLY ON CACHE INTERNAL "" FORCE)
     set(BUILD_CURL_EXE OFF CACHE INTERNAL "" FORCE)
-    set(BUILD_TESTING OFF CACHE INTERNAL "" FORCE)
+    set(BUILD_TESTING OFF)
 
     if (CPR_ENABLE_SSL)
         set(SSL_ENABLED ON CACHE INTERNAL "" FORCE)
@@ -299,7 +306,7 @@ endif()
 add_subdirectory(cpr)
 add_subdirectory(include)
 
-if(CPR_BUILD_TESTS)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND CPR_BUILD_TESTS)
     # Disable linting for test since they are currently not up to the standard
     clear_variable(DESTINATION CMAKE_CXX_CLANG_TIDY BACKUP CMAKE_CXX_CLANG_TIDY_BKP)
     enable_testing()
